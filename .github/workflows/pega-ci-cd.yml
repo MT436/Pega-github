@@ -2,7 +2,7 @@ name: Pega CI/CD
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   pega_deploy:
