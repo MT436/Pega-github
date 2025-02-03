@@ -24,7 +24,7 @@ jobs:
 
       - name: Export Ruleset from Dev
         run: |
-          curl -X GET "$PEGA_BASE_URL/prweb/api/v1/ruleset/export?ruleset=MyRuleset&version=06.02.01" \
+          curl -X GET "$PEGA_BASE_URL/prweb/api/v1/ruleset/export?ruleset=MyRuleset&version=08.01.01" \
             -H "Authorization: Bearer $TOKEN" \
             -o pega-rules.zip
 
