@@ -1,0 +1,42 @@
+name: Pega CI/CD
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  pega_deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Get OAuth Token
+        run: |
+          TOKEN=$(curl -s -X POST "$PEGA_BASE_URL/prweb/oauth2/v1/token" \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            -d "grant_type=client_credentials&client_id=$PEGA_CLIENT_ID&client_secret=$PEGA_CLIENT_SECRET" | jq -r .access_token)
+          echo "TOKEN=$TOKEN" >> $GITHUB_ENV
+        env:
+          PEGA_BASE_URL: ${{ secrets.PEGA_BASE_URL }}
+          PEGA_CLIENT_ID: ${{ secrets.PEGA_CLIENT_ID }}
+          PEGA_CLIENT_SECRET: ${{ secrets.PEGA_CLIENT_SECRET }}
+
+      - name: Export Ruleset from Dev
+        run: |
+          curl -X GET "$PEGA_BASE_URL/prweb/api/v1/ruleset/export?ruleset=MyRuleset&version=01-01-01" \
+            -H "Authorization: Bearer $TOKEN" \
+            -o pega-rules.zip
+
+      - name: Upload Ruleset to GitHub Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: pega-rules
+          path: pega-rules.zip
+
+      - name: Deploy to QA
+        run: |
+          curl -X POST "$PEGA_BASE_URL/prweb/api/v1/ruleset/import" \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Content-Type: multipart/form-data" \
+            -F "file=@pega-rules.zip"
